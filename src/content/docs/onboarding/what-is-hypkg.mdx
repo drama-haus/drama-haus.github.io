@@ -1,0 +1,241 @@
+---
+title: What is Hyperfy?
+description: Introduction to Hyperfy.
+---
+import { Badge } from '@astrojs/starlight/components';
+import { Card, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+
+## Overview
+
+The Hyperfy CLI is a command-line tool designed to manage modifications (mods) for Hyperfy applications. It provides functionality for installing, creating, updating, managing, and releasing mods across different repositories.
+
+## Installation
+
+```bash
+npm install -g hypkg
+```
+
+## Key Concepts
+
+- **Mods**: Customizations to the base Hyperfy application
+- **Repositories**: Sources of mods that can be added, removed, and managed
+- **Branches**: Development branches for working on mods
+- **Releases**: Tagged versions of mods that can be applied to projects
+
+## Commands
+
+### Setup and Installation
+
+#### `hypkg install`
+
+Interactive setup of a new Hyperfy project. This guides you through creating a new project, selecting branches, applying mods, and setting up your environment.
+
+Options:
+- `--no-install`: Skip npm install and server startup
+
+### Mod Management
+
+#### `hypkg apply [patchNames...]`
+
+Apply one or more mods to your project.
+
+Options:
+- `-v, --version <version>`: Specify a version to install (only for a single patch)
+
+```bash
+hypkg apply repo1/my-mod
+hypkg apply repo1/my-mod -v 1.2.0
+hypkg apply repo1/mod1 repo2/mod2
+```
+
+#### `hypkg remove [patchNames...]`
+
+Remove one or more mods from your project.
+
+```bash
+hypkg remove repo1/my-mod
+hypkg remove repo1/mod1 repo2/mod2
+```
+
+#### `hypkg list`
+
+List all applied mods in the current project.
+
+#### `hypkg reset`
+
+Remove all mods and upgrade the current branch to the latest base version.
+
+#### `hypkg search [patchName]`
+
+Search for mods across all repositories. If no name is provided, lists all available mods.
+
+```bash
+hypkg search
+hypkg search avatar
+```
+
+#### `hypkg sync`
+
+Reset and reapply all mods to ensure a clean state.
+
+
+Options:
+- `-n, --non-interactive`: Skip interactive prompts
+- `-u, --auto-update`: Automatically update to the latest version of each mod
+
+### Development Tools
+
+#### `hypkg init <patchName>`
+
+Initialize a new mod development environment.
+
+Options:
+- `-r, --repository <repository>`: Target repository for development
+- `-b, --branch <branchName>`: Custom branch name for development (defaults to patchName)
+
+```bash
+hypkg init my-new-mod
+hypkg init my-new-mod -r my-repo
+```
+
+#### `hypkg update [branchName]`
+
+Update a branch with the latest base changes and optionally release a new version.
+
+Options:
+- `-n, --non-interactive`: Skip interactive prompts
+- `-r, --auto-release`: Automatically create new release if changes detected
+- `--repository <repository>`: Specify target repository for release (if auto-releasing)
+
+```bash
+hypkg update
+hypkg update feature-branch
+hypkg update -r
+```
+
+#### `hypkg update-all`
+
+Update all feature branches with the latest base changes.
+
+Options:
+- `-n, --non-interactive`: Skip interactive prompts
+- `-r, --auto-release`: Automatically create new releases for updated branches with changes
+
+#### `hypkg release [branchName]`
+
+Create a new release from the current or specified branch.
+
+Options:
+- `-r, --repository <repository>`: Target repository for the release
+
+```bash
+hypkg release
+hypkg release feature-branch
+hypkg release -r my-repo
+```
+
+### Repository Management
+
+#### `hypkg repository add <name> [url]`
+
+Add a new mod repository.
+
+```bash
+hypkg repository add my-repo https://github.com/user/repo.git
+```
+
+#### `hypkg repository remove <name>`
+
+Remove a mod repository.
+
+```bash
+hypkg repository remove my-repo
+```
+
+#### `hypkg repository list`
+
+List all registered mod repositories.
+
+## Workflow Examples
+
+### Setting Up a New Project
+
+```bash
+# Create a new directory
+mkdir my-hyperfy-project
+cd my-hyperfy-project
+
+# Run the install command and follow the prompts
+hypkg install
+```
+
+### Creating and Releasing a New Mod
+
+```bash
+# Initialize a new mod development environment
+hypkg init my-awesome-mod -r my-repo
+
+# Make your changes to the code...
+
+# Create a release when ready
+hypkg release
+```
+
+### Applying Existing Mods
+
+```bash
+# Search for available mods
+hypkg search
+
+# Apply a specific mod
+hypkg apply my-repo/cool-mod
+
+# Apply a specific version
+hypkg apply my-repo/cool-mod -v 1.2.3
+
+# List applied mods
+hypkg list
+```
+
+### Updating and Syncing
+
+```bash
+# Update your current branch with the latest base changes
+hypkg update
+
+# Update all feature branches
+hypkg update-all
+
+# Sync all mods to ensure clean state
+hypkg sync
+```
+
+## Advanced Features
+
+### Versioning
+
+Mods are versioned using semantic versioning (e.g., 1.0.0). The CLI automatically manages version numbers when creating releases.
+
+### Repository Verification
+
+Repositories can be verified, providing an additional level of trust. Verified repositories are marked with a ✓ badge.
+
+### Metadata Storage
+
+The CLI stores metadata about mods and repositories in Git config, allowing it to track relationships between branches, mods, and repositories.
+
+### Conflict Resolution
+
+The CLI includes built-in conflict resolution for common issues, such as package.json conflicts.
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. Ensure you're in a valid Hyperfy project directory
+2. Check that Git is properly configured
+3. Verify that you have the necessary permissions for the repositories
+4. Try running with `--non-interactive` flag for automated operations
+
+For persistent issues, reset to a clean state with `hypkg reset` and reapply your mods.

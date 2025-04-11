@@ -1,0 +1,229 @@
+---
+title: Solana
+description: Solana mod for Hyperfy v2.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+import { LinkCard } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+
+## Quick start
+
+```
+git checkout dev
+git pull # make sure you have the latest changes
+git checkout -b my-custom-world # create a new branch for your customized world
+npx hypkg apply drama-haus/solana
+npm install # install the solana necessary dependencies
+```
+
+<LinkCard title="You can check what this patch adds here" href="https://github.com/hyperfy-xyz/hyperfy/compare/dev...drama-haus:hyperfy:cow_solana" />
+
+## Connection Strategies
+
+The Solana integration supports two connection strategies that can be configured with the `PUBLIC_CONNECTION_STRATEGY` environment variable:
+
+- `button`: Displays a wallet connect button in the top-right corner of the interface
+- `command`: Requires users to connect their wallet through a command
+
+## Environment Configuration
+
+The Solana integration requires the following environment variables to be added to your `.env` file:
+
+```
+# Required for all modes
+PUBLIC_RPC_URL=            # Solana RPC URL
+PUBLIC_CONNECTION_STRATEGY="<command|button>"  # UI connection strategy
+
+# For watch mode
+SOLANA_WATCH_ADDRESS=      # Address to watch (for watch mode)
+
+# For active mode (when server has a wallet)
+SOLANA_PKEY_ARRAY=         # JSON array with wallet private key
+SOLANA_WITHDRAWAL_FEE_BPS= # Optional: Fee in basis points (1 bps = 0.01%)
+SOLANA_FEE_WALLET_ADDRESS= # Optional: Address where fees are sent
+```
+
+The Solana integration can operate in two different modes:
+- **Watch Mode**: The server only observes a wallet's transactions (default)
+- **Active Mode**: The server has its own wallet and can sign transactions
+
+Active mode is enabled when `SOLANA_PKEY_ARRAY` is provided in the environment variables.
+
+## Using in scripts
+
+The mod exposes `app.solana()` and `player.solana` to scripts.
+- `player.solana` contains the solana wallet address of that player (if they are connected)
+- `app.solana()` contains the binding to interact with wallets and Solana programs
+
+## Solana Token Program
+
+The Solana integration provides access to a token program that allows scripts to interact with SPL tokens. This functionality is available through `app.solana().programs.token(tokenMint)`.
+
+### Basic Usage
+
+```javascript
+// Access a token by its mint address
+const tokenMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" // USDC mint address
+const token = await app.solana().programs.token(tokenMint)
+
+// Get token metadata
+console.log(`Token: ${token.name} (${token.symbol})`)
+console.log(`Decimals: ${token.decimals}`)
+```
+
+### Token Properties
+
+All tokens provide these properties:
+
+- `decimals` - Number of decimal places for the token
+- `supply` - Total token supply
+- `name` - Token name
+- `symbol` - Token symbol 
+- `uri` - Metadata URI
+
+### Server-Side Token Methods
+
+When running on the server, tokens have additional capabilities:
+
+**Server balance management:**
+```javascript
+// Get a player's virtual token balance on the server
+const balance = await token.getServerBalance(playerId)
+
+// Update a player's virtual token balance
+const result = await token.updateServerBalance(playerId, newBalance, {
+  reason: "Quest reward",
+  initiatedBy: app.instanceId
+})
+
+// Update balance by wallet address directly (for admin/settlements after crashes purposes)
+await token.updateServerBalanceByAddress(walletAddress, newBalance, {
+  reason: "settlement",
+  changeType: "reward"
+})
+```
+
+**Token withdrawal:**
+```javascript
+// Let a player withdraw their virtual tokens to their wallet
+const withdrawResult = await token.withdrawTokens(playerId, amount)
+if (withdrawResult.success) {
+  console.log(`Withdrew ${withdrawResult.netAmount} tokens (fee: ${withdrawResult.feeAmount || 0})`)
+}
+```
+
+**Audit and logging:**
+```javascript
+// Get token balance audit logs with filtering options
+const logs = await token.getBalanceAuditLogs({
+  limit: 10,
+  offset: 0
+})
+
+// Get audit logs for a specific player
+const playerLogs = await token.getPlayerBalanceAuditLogs(playerId, {
+  limit: 10,
+  offset: 0
+})
+```
+
+### Client-Side Token Methods
+
+When running on the client, tokens provide these additional methods:
+
+**Reactive balance tracking:**
+```javascript
+// Get current cached balance
+const currentBalance = token.balance
+
+// Fetch fresh balance from the network
+const { success, balance } = await token.fetchBalance()
+```
+
+### Common Token Methods
+
+These methods are available in both server and client contexts:
+
+**Balance operations:**
+```javascript
+// Get a wallet's on-chain token balance
+const { success, balance, tokenAccount } = await token.balance(walletAddress)
+
+// Transfer tokens from the current wallet to another address
+const transferResult = await token.transfer(recipientAddress, amount)
+if (transferResult.success) {
+  console.log(`Successfully sent ${amount} tokens!`)
+} else {
+  console.error(`Transfer failed: ${transferResult.error}`)
+}
+```
+
+## Listening to Token Events
+
+The Solana integration emits events that scripts can listen to using `world.on()`:
+
+### Token Transaction Events
+
+The server emits `token-transaction` events when token transactions occur:
+
+```javascript
+world.on('token-transaction', event => {
+  console.log(`Token transaction detected!`)
+  console.log(`Type: ${event.type}`) // 'deposit', 'withdrawal', 'withdrawal_with_fee'
+  console.log(`Amount: ${event.amount} ${event.token.symbol}`)
+  
+  if (event.type === 'deposit') {
+    console.log(`Sender: ${event.senderWallet}`)
+  } else {
+    console.log(`Recipient: ${event.recipientWallet}`)
+  }
+  
+  // Token details are included
+  console.log(`Token: ${event.token.name} (${event.token.symbol})`)
+})
+```
+
+### Token Balance Changes
+
+The client emits `token-balance-changed` events when a token balance changes:
+
+```javascript
+world.on('token-balance-changed', event => {
+  console.log(`Balance changed for ${event.token.mint}`)
+  console.log(`New balance: ${event.balance} ${event.token.symbol}`)
+  console.log(`Token account: ${event.tokenAccount}`)
+})
+```
+
+## Example
+
+```javascript
+  async function getBalance(tokenMint, account) {
+    const solana = app.solana()
+    if (!solana?.connection) {
+      log('No Solana connection');
+    }
+
+    token = await solana.programs.token(tokenMint)
+    if (!token) throw new Error("token not found")
+
+    const { success, balance, tokenAccount } = await token.balance(account)
+    console.log({ success, balance, tokenAccount })
+  }
+
+async function transfer(tokenMint, to, amount) {
+  const solana = app.solana()
+  const token = await solana.programs.token(tokenMint) // fetch token metadata
+  const transferResult = await token.transfer(to, amount);
+  const player = world.getPlayer();
+
+  if (transferResult.success) {
+    app.send("client:transfer:success", [amount, to, player.solana]);
+  } else {
+    app.send("client:transfer:error", [amount, to, player.solana]);
+  }
+}
+```
+
+---

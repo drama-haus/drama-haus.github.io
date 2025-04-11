@@ -1,0 +1,98 @@
+---
+title: "Hyperfy New Features: Target Lock System & Animation Customization"
+description: "Documentation for the latest additions to Hyperfy - target camera lock system and custom animation support"
+---
+
+# New Features in Hyperfy
+
+## Target Lock-On System
+
+A new camera target lock system has been added to Hyperfy's player controls, allowing players to lock their camera and movement focus on specific entities, similar to systems found in action games.
+
+### Key Features
+
+- Lock onto players and VRM-based avatars with a keypress (Q)
+- Switch between multiple targets within range (E)
+- Camera and player rotation automatically focuses on the locked target
+- Visual target marker appears above locked targets
+- Specialized strafing and backward movement animations when locked onto a target
+
+### Internal Implementation
+
+- Added to the `PlayerLocal` class with target tracking and validation
+- Uses raycast for initial target selection
+- Tracks nearby avatar entities for target switching
+- Automatically validates locked targets and their distances
+
+## Animation Customization
+
+The update introduces the ability to customize player animations through a new proxy method.
+
+### Player Proxy Method
+
+```javascript
+// Replace or add custom animations to the player
+player.replaceAnimations(newEmotes, reset)
+```
+
+#### Parameters:
+
+- `newEmotes`: An object containing animation paths mapped to emote names
+- `reset`: Boolean (optional) - If true, replaces all animations with only the provided ones; if false (default), merges with existing animations
+
+### Usage Example
+
+```javascript
+// In your app script
+app.onStart(() => {
+  // Example: Replace just the IDLE animation with a custom one
+  const localPlayer = world.getPlayer()
+  
+  localPlayer.replaceAnimations({
+    IDLE: 'asset://my-custom-idle.glb'
+  })
+  
+  // Example: Replace all animations with custom ones
+  localPlayer.replaceAnimations({
+    IDLE: 'asset://my-custom-idle.glb',
+    WALK: 'asset://my-custom-walk.glb',
+    RUN: 'asset://my-custom-run.glb'
+  }, true)
+})
+```
+
+## New Player Animations
+
+Six new animations have been added to enhance movement, particularly for the target lock system:
+
+- Strafing left (`STRAFE_LEFT`)
+- Strafing right (`STRAFE_RIGHT`) 
+- Running while strafing left (`RUN_STRAFE_LEFT`)
+- Running while strafing right (`RUN_STRAFE_RIGHT`)
+- Walking backward (`WALK_BACKWARD`)
+- Running backward (`RUN_BACKWARD`)
+
+These animations are automatically selected when the player is moving in different directions while locked onto a target.
+
+### Emote Constants
+
+All available player animations are accessible through the `Emotes` constants:
+
+```javascript
+// Example of all available animations
+const availableEmotes = {
+  IDLE: 'asset://emote-idle.glb',
+  WALK: 'asset://emote-walk.glb',
+  RUN: 'asset://emote-run.glb',
+  FLOAT: 'asset://emote-float.glb',
+  FALL: 'asset://emote-fall.glb',
+  FLIP: 'asset://emote-flip.glb',
+  TALK: 'asset://emote-talk.glb',
+  STRAFE_LEFT: 'asset://emote-strafe-left.glb',
+  STRAFE_RIGHT: 'asset://emote-strafe-right.glb',
+  RUN_STRAFE_LEFT: 'asset://emote-run-strafe-left.glb',
+  RUN_STRAFE_RIGHT: 'asset://emote-run-strafe-right.glb',
+  WALK_BACKWARD: 'asset://emote-walk-backward.glb',
+  RUN_BACKWARD: 'asset://emote-run-backward.glb'
+}
+```

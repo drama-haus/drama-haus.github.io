@@ -1,0 +1,157 @@
+---
+title: EVM 
+description: EVM integration for Hyperfy v2.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+import { LinkCard } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+
+## Quick start
+
+```
+git checkout dev
+git pull # make sure you have the latest changes
+git checkout -b my-custom-world # create a new branch for your customized world
+npm install # install the EVM dependencies (wagmi and viem)
+```
+
+<LinkCard title="You can check what this patch adds here" href="https://github.com/hyperfy-xyz/hyperfy/compare/dev...cow_evm" />
+
+## Environment Configuration
+
+The EVM integration requires the following environment variables to be added to your `.env` file:
+
+```
+# Required for all modes
+PUBLIC_EVM=mainnet  # EVM chain to use (defaults to 'mainnet')
+
+# For server wallet operations
+EVM_SEED_PHRASE=   # Required for server wallet operations
+```
+
+## Using in scripts
+
+The integration exposes `player.evm` and `world.evm` to scripts:
+- `player.evm` contains the connected wallet address of that player
+- `world.evm` provides access to EVM functionality and utilities
+
+### Player Properties
+
+```javascript
+// Get the current player's wallet address
+const player = world.getPlayer()
+console.log(player.evm) // Returns the player's wallet address
+```
+
+### World Properties
+
+The `world.evm` object provides the following structure:
+
+```javascript
+world.evm = {
+  actions: {}, // wagmi actions
+  utils: {}, // viem utilities
+  abis: {
+    erc20: erc20Abi,
+    erc721: null
+  }
+}
+```
+
+## Client-Side Actions
+
+On the client side, all wagmi actions are automatically bound to the world object and available through `world.evm.actions`. These actions are pre-configured with the current wagmi config and can be used directly:
+
+```javascript
+// Example of using client-side actions
+const result = await world.evm.actions.readContract({
+  address: '0x...',
+  abi: world.evm.abis.erc20,
+  functionName: 'balanceOf',
+  args: [player.evm]
+})
+
+// Write operations are also available
+const tx = await world.evm.actions.writeContract({
+  address: '0x...',
+  abi: world.evm.abis.erc20,
+  functionName: 'transfer',
+  args: [recipientAddress, amount]
+})
+```
+
+<Aside type="note">
+Client-side actions are automatically bound when the client initializes and the wallet is connected. They use the current wagmi configuration and wallet connection.
+</Aside>
+
+## Contract Interactions
+
+The EVM integration provides access to contract interactions through `world.evm.actions` and `world.evm.getContract()`.
+
+### Basic Usage
+
+```javascript
+// Access a contract by its address
+const contract = world.evm.getContract({
+  address: '0x...',
+  abi: world.evm.abis.erc20
+})
+
+// Read from a contract
+const balance = await world.evm.actions.readContract({
+  address: '0x...',
+  abi: world.evm.abis.erc20,
+  functionName: 'balanceOf',
+  args: [player.evm]
+})
+```
+
+### Common Contract Methods
+
+These methods are available in both server and client contexts:
+
+```javascript
+// Get a wallet's token balance
+const balance = await world.evm.actions.readContract({
+  address: tokenAddress,
+  abi: world.evm.abis.erc20,
+  functionName: 'balanceOf',
+  args: [walletAddress]
+})
+
+// Transfer tokens
+const transferResult = await world.evm.actions.writeContract({
+  address: tokenAddress,
+  abi: world.evm.abis.erc20,
+  functionName: 'transfer',
+  args: [recipientAddress, amount]
+})
+```
+
+## Example
+
+```javascript
+app.on('update', () => {
+  const player = world.getPlayer()
+  if (player.evm) {
+    // Player has a connected wallet
+    const contract = world.evm.getContract({
+      address: '0x...',
+      abi: world.evm.abis.erc20
+    })
+    
+    // Use wagmi actions
+    const balance = await world.evm.actions.readContract({
+      address: '0x...',
+      abi: world.evm.abis.erc20,
+      functionName: 'balanceOf',
+      args: [player.evm]
+    })
+
+    if (balance > 0) {
+      app.send('client:balance', [balance, player.evm])
+    }
+  }
+})
+```
