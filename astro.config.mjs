@@ -5,6 +5,9 @@ import { ion } from "starlight-ion-theme";
 
 // https://astro.build/config
 export default defineConfig({
+  // Get your repository name from your GitHub URL path
+  base: '/docs',
+  site: 'https://drama-haus.github.io',
   integrations: [
     starlight({
       title: "hypkg",
