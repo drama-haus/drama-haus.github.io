@@ -18,23 +18,9 @@ export default defineConfig({
       favicon: "/assets/drama.svg",
       customCss: ["./src/styles/custom.css"],
       social: {
-        // github: "https://github.com/hyperfy-xyz",
-        // discord: "https://discord.gg/SzPjsvk5",
-        // "x.com": "https://x.com/hyperfy_io",
-        // farcaster: "https://warpcast.com/~/channel/hyperfy",
-        // youtube: "https://www.youtube.com/@hyperfy_xyz",
       },
       sidebar: [
         { label: "quick start", slug: "index" },
-        // {
-        //   label: "onboarding",
-        //   collapsed: true,
-        //   items: [
-        //     // { label: "What is hypkg?", slug: "onboarding/what-is-hypkg" },
-
-        //     // { label: "detailed installation", slug: "onboarding/detailed" },
-        //   ],
-        // },
         {
           label: "mods",
           collapsed: true,
