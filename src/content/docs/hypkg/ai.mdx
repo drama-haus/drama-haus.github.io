@@ -1,0 +1,195 @@
+---
+title: AI Features
+description: AI integration for Hyperfy apps.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+import { LinkCard } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+
+## Quick start
+
+```bash
+git checkout dev
+git pull # make sure you have the latest changes
+git checkout -b my-ai-world # create a new branch for your AI-enabled world
+npx hypkg apply drama-haus/ai
+npm install # install the AI dependencies
+```
+
+<LinkCard title="You can check what this patch adds here" href="https://github.com/hyperfy-xyz/hyperfy/compare/dev...cow_ai" />
+
+## Environment Configuration
+
+Required environment variables for `.env` file (LLM provider variables optional if only using MCP tools):
+
+```bash
+OPENAI_API_KEY=   # Your OpenAI API key for GPT-4 access
+ANTHROPIC_API_KEY=   # Your Anthropic API key for Claude access
+OPENROUTER_API_KEY=   # Your OpenRouter API key 
+PUBLIC_AI_ASSISTANT="<true|false>" # Enable/disable the assistant UI
+```
+
+## Using in scripts
+
+The integration exposes `app.prompt` to scripts for AI interactions. This allows any app to make AI queries and get responses, with full access to the MCP tools system.
+
+### App Properties
+
+The AI integration adds the following methods to the `app` object:
+
+```javascript
+app = {
+  prompt: async (query, options) => string, // Make an AI query and get response
+  registerTool: (toolName, schema, handler) => boolean, // Register a custom MCP tool
+  debug: () => void // Print debug info about registered tools
+}
+```
+
+## Making AI Queries
+
+You can use the `app.prompt()` function to interact with the AI system:
+
+```javascript
+// Basic query
+const response = await app.prompt({
+  query: "Can you tell me a joke?",
+  userId: player.data.id,
+  entityId: entity.data.id
+})
+
+console.log(response) // Full response from the AI
+```
+
+<Aside type="note">
+The AI system will automatically use the current provider set in world settings. You can change providers at any time through `world.settings.llmProvider`.
+</Aside>
+
+## Custom Tool Registration
+
+Apps can register custom tools that the AI can use:
+
+```javascript
+// Register a custom tool
+app.registerTool(
+  'my-custom-tool',
+  {
+    // Tool schema using Zod
+    param1: z.string().describe('First parameter description'),
+    param2: z.number().describe('Second parameter description')
+  },
+  async (params) => {
+    // Tool handler implementation
+    const { param1, param2 } = params
+    // Do something with the parameters
+    return {
+      content: [{ type: 'text', text: 'Tool result' }]
+    }
+  }
+)
+```
+
+## Chat Example
+
+This example registers a 'chat' tool, a prompt that tries to use it and a button to trigger the prompt.
+
+```javascript
+if (world.isServer) {
+  app.registerTool("chat",
+    {
+      name: z.string().describe('chatter name'),
+      message: z.string().describe('chat message'),
+    },
+    ({ name, message }) => {
+      world.chat({
+        fromId: app.instanceId,
+        body: message,
+        from: name,
+        createdAt: Date.now()
+      }, true)
+
+      return {
+        content: [{ type: 'text', text: 'Message sent successfully' }]
+      }
+    }
+  )
+
+  const prompt = async () => {
+    console.log(
+      await app.prompt({ query: "can you use the chat tool to greet all players into the dungeon?" })
+    )
+  }
+
+  app.on('prompt', () => { prompt() })
+}
+
+app.configure([
+  {
+    key: 'prompt',
+    type: 'button',
+    label: 'prompt',
+    onClick: () => { app.send('prompt') }
+  }
+])
+```
+
+## Built-in Tools
+
+The AI system comes with several built-in MCP tools:
+
+- `get-entity-script` - Get the script content of an entity
+- `update-app-script` - Update an app's script
+- `get-app-scripts` - Search and retrieve app scripts
+- `find-app-script-usage` - Find entities using specific scripts
+- `search-docs` - Search the Hyperfy documentation
+- `create-entity` - Create a new entity from a blueprint
+
+## Interacting with the AI System
+
+Builders have two ways to interact with the AI system:
+
+### 1. In-World Assistant
+
+The in-world AI assistant is accessible through a floating button in the bottom center of the screen when in build mode, or via the `Shift + L` keyboard shortcut. It provides a seamless interface for making AI queries with real-time streaming responses, visual feedback for tool execution, and a complete conversation history - perfect for quick iterations while building.
+
+### 2. Cursor
+
+The mod already includes Cursor IDE integration. All you have to do is open the repository on Cursor and activate the MCP tool usage on Cursor Settings. To add in other projects/globally all you have to do is add this to `mcp.json`
+
+```json
+{
+    "mcpServers": {
+      "hyperfy-mcp-server": {
+        "url": "http://localhost:3000/sse"
+      }
+    }
+}
+```
+
+### 3. Eliza
+
+You can use [fleek mcp plugin](https://github.com/fleek-platform/eliza-plugin-mcp) to add connect your world to eliza agents
+
+<Aside type="note">
+For now, you need to run both your hyperfy world and eliza agent on the same machine.
+</Aside>
+
+```typescript
+export const character: Character = {
+    name: 'Eliza',
+    plugins: [
+      '@fleek-platform/eliza-plugin-mcp',
+    ],
+    settings: {
+      mcp: {
+        servers: {
+          hyperfy: {
+            type: 'sse',
+            url: 'http://localhost:3000/sse', // your hyperfy world url
+          },
+        },
+      },
+    },
+}
+```
+
