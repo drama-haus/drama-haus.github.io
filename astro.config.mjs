@@ -25,6 +25,7 @@ export default defineConfig({
           items: [
             { label: "solana", slug: "hypkg/solana" },
             { label: "evm", slug: "hypkg/evm" },
+            { label: "ai", slug: "hypkg/ai" },
             // { label: "camera lock", slug: "hypkg/cameralock" },
           ],
         },
