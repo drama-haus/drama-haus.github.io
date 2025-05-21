@@ -1,0 +1,33 @@
+---
+title: IDE Scripting
+description: Discover the enhanced scripting workflow, including live IDE updates and script renaming.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+import { LinkCard } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+
+## Quick start
+
+```bash
+git checkout dev
+git pull # make sure you have the latest changes
+git checkout -b my-world # create a new branch for your world
+npx hypkg apply drama-haus/ide-scripting
+npm install # install the file watcher
+```
+
+<LinkCard title="You can check what this patch adds here" href="https://github.com/hyperfy-xyz/hyperfy/compare/dev...drama-haus:hyperfy:cow_ide-scripting" />
+
+## Features
+
+- **Live IDE Sync**: Modify script files in your external IDE, and the `AssetWatcher` system automatically detects changes, updates the relevant blueprint, and rebuilds the app in real-time.
+- **In-World Script Renaming**: Easily rename scripts through the "Script" pane UI, with changes seamlessly propagating through the system.
+
+## How it works
+
+The `AssetWatcher` system monitors the `scripts` folder for changes. When a change is detected, it updates the relevant blueprint and rebuilds the app.
+
+<Aside type="note">
+When importing apps made with this mod to vanilla worlds, you need to save the script once after importing for it to work properly.
+</Aside>
