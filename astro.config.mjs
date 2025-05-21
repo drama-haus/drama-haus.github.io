@@ -23,9 +23,10 @@ export default defineConfig({
           label: "mods",
           collapsed: true,
           items: [
-            { label: "solana", slug: "hypkg/solana" },
+            // { label: "solana", slug: "hypkg/solana" },
             { label: "evm", slug: "hypkg/evm" },
             { label: "ai", slug: "hypkg/ai" },
+            { label: "ide scripting", slug: "hypkg/ide_scripting" },
             // { label: "camera lock", slug: "hypkg/cameralock" },
           ],
         },
